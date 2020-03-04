@@ -79,7 +79,9 @@ objectClass tommygun;
 objectClass badge;
 
 // ROSparams
+float rate;
 int size,scale;
+string laser_topic, odometry_topic, darknet_topic, object_placement_topic;
 
 public:
 // Constructor
@@ -88,15 +90,20 @@ objectPlacing(int argc, char** argv) {
     // Get ROSparams
     nh.getParam("MAP_SIZE",size);
     nh.getParam("SCALE",scale);
+    nh.getParam("PUBLISHING_RATE",rate);
+    nh.getParam("LASER_SCAN_TOPIC", laser_topic);
+    nh.getParam("ODOMETRY_TOPIC", odometry_topic);
+    nh.getParam("DARKNET_BBOX_TOPIC",darknet_topic);
+    nh.getParam("OBJECT_PLACEMENT_TOPIC",object_placement_topic);
 
     // Initiate publisher
-    objectPlacement_pub = nh.advertise<vortex_msgs::ObjectPlacement>("/objectPlacement",100);
+    objectPlacement_pub = nh.advertise<vortex_msgs::ObjectPlacement>(object_placement_topic,100);
 
     // Initiate subscribers
-    ekf_sub = nh.subscribe("/odometry/filtered",100,&objectPlacing::ekfCallback, this);
-    sonar_sub = nh.subscribe("/manta/sonar",100,&objectPlacing::sonarCallback, this);
-    darknet_sub = nh.subscribe("/darknet_ros/bounding_boxes",100,&objectPlacing::darknetCallback, this);
-    timer = nh.createTimer(ros::Duration(0.5),&objectPlacing::publishCallback, this);
+    ekf_sub = nh.subscribe(odometry_topic,100,&objectPlacing::ekfCallback, this);
+    sonar_sub = nh.subscribe(laser_topic,100,&objectPlacing::sonarCallback, this);
+    darknet_sub = nh.subscribe(darknet_topic,100,&objectPlacing::darknetCallback, this);
+    timer = nh.createTimer(ros::Duration(rate),&objectPlacing::publishCallback, this);
 
 
 
